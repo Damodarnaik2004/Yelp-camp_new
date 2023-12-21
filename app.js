@@ -1,9 +1,11 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const ejsMate= require('ejs-mate');
 const app =express();
 const methodOverride = require('method-override');
 app.use(express.urlencoded({extended:true}))
 app.use(methodOverride('_method'));
+app.engine('ejs',ejsMate);
 const Campground = require('./models/campground')
 mongoose.connect('mongodb://localhost:27017/Yelp-Camp',{
     //useCreateIndex:true,
@@ -41,7 +43,10 @@ app.get('/campgrounds/new',async(req,res)=>{
 app.post('/campgrounds',async(req,res)=>{
     const campground = new Campground({
         title:req.body.title,
-        location:req.body.location
+        location:req.body.location,
+        price:req.body.price,
+        image:req.body.image,
+        description:req.body.description
     });
     await campground.save();
     res.redirect(`/campgrounds/${campground._id}`);
