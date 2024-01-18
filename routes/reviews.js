@@ -6,38 +6,11 @@ const ExpressError=require('../utils/ExpressError')
 const Campground = require('../models/campground')
 const Review = require('../models/review.js')
 const {reviewSchema}=require('../schemas.js');
+const {validateReview,isLoggedIn,isReviewAuthor}= require('../middleware.js')
+const reviews = require('../controllers/reviews.js')
+router.post('/',isLoggedIn, validateReview, catchAsync(reviews.createReview));
 
 
-const validateReview = (req, res, next) => {
-    const { error } = reviewSchema.validate(req.body);
-
-    if (error) {
-        const msg = error.details.map((el) => el.message).join(',');
-        // Assuming ExpressError is a custom error class for your application
-        throw new ExpressError(msg, 400);
-    } else {
-        next();
-    }
-};
-router.post('/', validateReview, catchAsync(async(req,res)=>{
-    const campground = await Campground.findById(req.params.id);
-    const review = new Review(req.body.review);
-    campground.reviews.push(review);
-    await review.save();
-    await campground.save();
-    req.flash('success','Created a new Review!')
-    res.redirect(`/campgrounds/${campground._id}`);
-}));
-
-
-router.delete('/:reviewId', catchAsync(async (req, res) => {
-    const { id, reviewId } = req.params;
-
-    await Campground.findByIdAndUpdate(id, { $pull: { reviews: reviewId } });
-
-    await Review.findByIdAndDelete(reviewId);
-    req.flash('success','Successfully deleted Review!')
-    res.redirect(`/campgrounds/${id}`);
-}));
+router.delete('/:reviewId',isReviewAuthor,isLoggedIn, catchAsync(reviews.deleteReview));
 
 module.exports=router;
